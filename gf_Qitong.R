@@ -1,0 +1,327 @@
+# setup your working directory 
+setwd()
+
+############### 
+# preprocessing 
+############### 
+# Read in data
+gf = read.csv("GF.csv")
+
+#------------------------------------dealing with column 'country'---------------------------------------------
+#Remove columns from dataframe where ALL values are NA
+gf = gf[,colSums(is.na(gf))<nrow(gf)]
+gf = gf[,-c(2,6,7,15,31)]
+
+#leading and trailing whitespace in a data.frame
+trim <- function (D){ 
+  for (i in 1:length(D)){
+    s = D[i]
+    s1 = gsub("^\\s+|\\s+$", "", s)
+    D[i] = s1
+  }
+ return (D)
+}  
+# none-relevent characters "\xca"  
+move <- function (D) {
+  for (i in 1:length(D)){
+  s = D[i]
+  s1 = gsub("[\xca]","",s)
+  D[i] = s1
+  }
+  return (D)
+}  
+levels(gf$Country) = move(levels(gf$Country))
+levels(gf$Country) = trim(levels(gf$Country))  
+
+# spelling mistakes and inconsistent names
+levels(gf$Country)[levels(gf$Country)==""] = NA
+levels(gf$Country)[levels(gf$Country)=="#N/A"] = NA
+levels(gf$Country)[levels(gf$Country)=="USA."] = "USA"
+levels(gf$Country)[levels(gf$Country)=="Bangaldesh"] = "Bangladesh"
+levels(gf$Country)[levels(gf$Country)=="Bangledesh"] = "Bangladesh"
+levels(gf$Country)[levels(gf$Country)=="Boliva"] = "Bolivia"
+levels(gf$Country)[levels(gf$Country)=="Bosnia"] = "Bosnia and Herzegovina"
+levels(gf$Country)[levels(gf$Country)=="Bosnia and Herzogovina"] = "Bosnia and Herzegovina"
+levels(gf$Country)[levels(gf$Country)=="Bosnia-Hercegovenia"] = "Bosnia and Herzegovina"
+levels(gf$Country)[levels(gf$Country)=="Bosnia-Herzegovina"] = "Bosnia and Herzegovina"
+levels(gf$Country)[levels(gf$Country)=="Burkino Faso"] = "Burkina Faso"
+levels(gf$Country)[levels(gf$Country)=="Burma"] = "Myanmar"
+levels(gf$Country)[levels(gf$Country)=="Burma/Myanmar"] = "Myanmar"
+levels(gf$Country)[levels(gf$Country)=="Columbia"] = "Colombia"
+levels(gf$Country)[levels(gf$Country)=="Comoros islands"] ="Comoros Islands"
+levels(gf$Country)[levels(gf$Country)=="Cote d'Ivoire"] = "Ivory Coast"
+levels(gf$Country)[levels(gf$Country)=="DR Congo"] ="Democratic Republic of the Congo"
+levels(gf$Country)[levels(gf$Country)=="Democratic Republic Congo"] ="Democratic Republic of the Congo"
+levels(gf$Country)[levels(gf$Country)=="Democratic Republic of Congo"] ="Democratic Republic of the Congo"
+levels(gf$Country)[levels(gf$Country)=="Congo"] = "Democratic Republic of the Congo"
+levels(gf$Country)[levels(gf$Country)=="Congo Republic"] = "Republic of the Congo"
+levels(gf$Country)[levels(gf$Country)=="Domnican Republic"] = "Dominican Republic" 
+levels(gf$Country)[levels(gf$Country)=="El Savador"] = "El Salvador"
+levels(gf$Country)[levels(gf$Country)=="Inda"] = "India"
+levels(gf$Country)[levels(gf$Country)=="Guatamala"] = "Guatemala"
+levels(gf$Country)[levels(gf$Country)=="Kazahkstan"] = "Kazakhstan"
+levels(gf$Country)[levels(gf$Country)=="Malayasia"] = "Malaysia"
+levels(gf$Country)[levels(gf$Country)=="Moldava"] = "Moldova"
+levels(gf$Country)[levels(gf$Country)=="Moldovo"] = "Moldova"
+levels(gf$Country)[levels(gf$Country)=="Myanamar"] = "Myanmar"
+levels(gf$Country)[levels(gf$Country)=="Papua New Gunea"] = "Papua New Guinea"
+levels(gf$Country)[levels(gf$Country)=="Philipines"] = "Philippines"
+levels(gf$Country)[levels(gf$Country)=="Philippine"] = "Philippines"
+levels(gf$Country)[levels(gf$Country)=="Phillipines"] = "Philippines"
+levels(gf$Country)[levels(gf$Country)=="Phillippines"] = "Philippines"
+levels(gf$Country)[levels(gf$Country)=="Serbia-Montenegro"] = "Serbia and Montenegro"
+levels(gf$Country)[levels(gf$Country)=="UK"] = "United Kingdom" 
+levels(gf$Country)[levels(gf$Country)=="Uruguay,"] = "Uruguay"
+levels(gf$Country)[levels(gf$Country)=="USSR"] = "Soviet Union"
+levels(gf$Country)[levels(gf$Country)=="Viet Nam"] = "Vietnam"
+levels(gf$Country)[levels(gf$Country)=="Zimbawe"] = "Zimbabwe" 
+levels(gf$Country)[levels(gf$Country)=="Venezulea"] = "Venezuela"
+
+
+#############################################################################
+#clean main cause data
+main.cause = as.character(gf$Main.cause)
+
+main.cause[main.cause == "J\x9akulhlaup"] = "unknown causes"
+main.cause[main.cause == "0"] = "unknown causes"
+main.cause[main.cause == "#N/A"] = "unknown causes"
+main.cause[main.cause == ""] = "unknown causes"
+
+for(i in 1:length(main.cause)){
+  main.cause[i] = tolower(main.cause[i])
+}
+
+# remove the specific storm/hurricane/cyclone/typhoon name
+for(i in 1:length(main.cause)){
+  if(grepl('^tropical storm', main.cause[i]))
+    main.cause[i] = "tropical storm"
+  if(grepl('^hurricane', main.cause[i]))
+    main.cause[i] = "hurricane"
+  if(grepl('^tropical cyclone', main.cause[i]))
+    main.cause[i] = "tropical cyclone"
+  if(grepl('^typhoon', main.cause[i]))
+    main.cause[i] = "typhoon"
+}
+
+# if there are multiple causes, save as "multiple causes"
+for(i in 1:length(main.cause)){
+  if(grepl("and", main.cause[i]))
+    main.cause[i] = "multiple causes"
+  if(grepl(",", main.cause[i]))
+    main.cause[i] = "multiple causes"
+}
+
+main.cause[main.cause == "avalance breach"] = "avalanche"
+main.cause[main.cause == "avalanche related"] = "avalanche"
+main.cause[main.cause == "brief torrential rain"] = "torrential rain"
+main.cause[main.cause == "dam failure"] = "dam break"
+main.cause[main.cause == "dam release"] = "dam break"
+main.cause[main.cause == "dam/levy, break or release"] = "dam break"
+main.cause[main.cause == "extra-tropical cyclone"] = "tropical cyclone"
+main.cause[main.cause == "heavy  rain"] = "heavy rain"
+main.cause[main.cause == "heay rain"] = "heavy rain"
+main.cause[main.cause == "heavy monsoon rains"] = "monsoon rain"
+main.cause[main.cause == "heavy rain, began with #4079"] = "heavy rain"
+main.cause[main.cause == "heavy seasonal rains"] = "heavy rain"
+main.cause[main.cause == "heavyrain"] = "heavy rain"
+main.cause[main.cause == "heavy rain snowmelt dam b"] = "multiple causes"
+main.cause[main.cause == "high tides"] = "storm surge"
+main.cause[main.cause == "ice jam and ice melt"] = "ice jam"
+main.cause[main.cause == "ice jam or ice break-up"] = "ice jam"
+main.cause[main.cause == "ice jam/break-up"] = "ice jam"
+main.cause[main.cause == "ice jams"] = "ice jam"
+main.cause[main.cause == "monsoonal rain"] = "monsoon rain"
+main.cause[main.cause == "monoonal rain"] = "monsoon rain"
+main.cause[main.cause == "monsoonal rainfall"] = "monsoon rain"
+main.cause[main.cause == "monsoon rain, began with #4078"] = "monsoon rain"
+main.cause[main.cause == "monsoon rains"] = "monsoon rain"
+main.cause[main.cause == "monsoonal ran"] = "monsoon rain"
+main.cause[main.cause == "rainy season"] = "heavy rain"
+main.cause[main.cause == "see notes"] = "unknown causes"
+main.cause[main.cause == "snowmelt"] = "snow melt"
+main.cause[main.cause == "tidal surge"] = "high tide"
+main.cause[main.cause == "torrrential rain"] = "torrential rain"
+main.cause[main.cause == " torrential rain"] = "torrential rain"
+main.cause[main.cause == "torrential rains"] = "torrential rain"
+main.cause[main.cause == "torrential rain; tropical storm gon"] = "multiple causes"
+main.cause[main.cause == "tropical  storm fenshen"] = "tropical storm"
+main.cause[main.cause == "tropical depressions"] = "tropical depression"
+main.cause[main.cause == "tropical stroms pendring and nalgae"] = "tropical storm"
+
+gf$Main.cause = main.cause
+
+
+####################################################################################
+## annual and monthly floods barplots
+library(reshape2)
+library(ggplot2)
+library("RColorBrewer")
+
+annual = read.csv("annual_analysis.csv")
+extreme.to.large = annual[,3] - annual[,4]
+large.to.all = annual[,2] - annual[,3]
+annual = cbind(annual[,c(1,4)], extreme.to.large, large.to.all)
+annual = melt(annual, id.vars = "Year")
+colors = brewer.pal(name="Blues", n=nlevels(annual$variable))
+names(colors) = rev(levels(annual$variable))
+ggplot(annual,aes(x=Year,value,fill=variable)) + geom_bar(stat="identity") + 
+  scale_fill_manual(values = colors, name="Magnitude", labels=c("M>6", "4<M<=6", "M<=4")) +  
+  ylab("count") + ggtitle("Annual Floods") + theme_bw()
+
+
+monthly = read.csv("monthly_analysis.csv")
+extreme.to.large = monthly[,3] - monthly[,4]
+large.to.all = monthly[,2] - monthly[,3]
+monthly = cbind(monthly[,c(1,4)], extreme.to.large, large.to.all)
+monthly = melt(monthly, id.vars = "Month")
+colors = brewer.pal(name="Blues", n=nlevels(monthly$variable))
+names(colors) = rev(levels(monthly$variable))
+ggplot(monthly,aes(x=Month,value,fill=variable)) + geom_bar(stat="identity") + 
+  scale_fill_manual(values = colors, name="Magnitude", labels=c("M>6", "4<M<=6", "M<=4")) +  
+  ylab("count") + ggtitle("Monthly Floods") + scale_x_discrete(limits=1:12)
+
+#####################################################################################
+## create dummy variables for main cause
+## plot barplot of main cause
+
+gf.new = read.csv("GF.csv")
+cause = as.character(gf.new$Main.cause)
+
+cause[cause == "J\x9akulhlaup"] = "unknown causes"
+cause[cause == "0"] = "unknown causes"
+cause[cause == "#N/A"] = "unknown causes"
+cause[cause == ""] = "unknown causes"
+
+for(i in 1:length(cause)){
+  cause[i] = tolower(cause[i])
+}
+
+# remove the specific storm/hurricane/cyclone/typhoon name
+for(i in 1:length(cause)){
+  if(grepl('^tropical storm', cause[i]))
+    cause[i] = "tropical storm"
+  if(grepl('^hurricane', cause[i]))
+    cause[i] = "hurricane"
+  if(grepl('^tropical cyclone', cause[i]))
+    cause[i] = "tropical cyclone"
+  if(grepl('^typhoon', cause[i]))
+    cause[i] = "typhoon"
+}
+
+# replace "and" to "," in causes
+cause = gsub(" and", ",", cause)
+cause = gsub(";", ",", cause)
+
+cause[cause == "avalance breach"] = "avalanche"
+cause[cause == "avalanche related"] = "avalanche"
+cause[cause == "brief torrential rain"] = "torrential rain"
+cause[cause == "dam failure"] = "dam break"
+cause[cause == "dam release"] = "dam break"
+cause[cause == "dam/levy, break or release"] = "dam break"
+cause[cause == "extra-tropical cyclone"] = "tropical cyclone"
+cause[cause == "heavy  rain"] = "heavy rain"
+cause[cause == "heay rain"] = "heavy rain"
+cause[cause == "heavy monsoon rains"] = "monsoon rain"
+cause[cause == "heavy rain, began with #4079"] = "heavy rain"
+cause[cause == "heavy seasonal rains"] = "heavy rain"
+cause[cause == "heavyrain"] = "heavy rain"
+cause[cause == "heavy rain snowmelt dam b"] = "heavy rain, snowmelt, dam break"
+cause[cause == "high tides"] = "storm surge"
+cause[cause == "ice jam , ice melt"] = "ice jam"
+cause[cause == "ice jam or ice break-up"] = "ice jam"
+cause[cause == "ice jam/break-up"] = "ice jam"
+cause[cause == "ice jams"] = "ice jam"
+cause[cause == "monsoonal rain"] = "monsoon rain"
+cause[cause == "monoonal rain"] = "monsoon rain"
+cause[cause == "monsoonal rainfall"] = "monsoon rain"
+cause[cause == "monsoon rain, began with #4078"] = "monsoon rain"
+cause[cause == "monsoon rains"] = "monsoon rain"
+cause[cause == "monsoonal ran"] = "monsoon rain"
+cause[cause == "rainy season"] = "heavy rain"
+cause[cause == "see notes"] = "unknown causes"
+cause[cause == "snow melt"] = "snowmelt"
+cause[cause == "tidal surge"] = "high tide"
+cause[cause == "torrrential rain"] = "torrential rain"
+cause[cause == " torrential rain"] = "torrential rain"
+cause[cause == "torrential rains"] = "torrential rain"
+cause[cause == "tropical  storm fenshen"] = "tropical storm"
+cause[cause == "tropical depressions"] = "tropical depression"
+cause[cause == "tropical stroms pendring, nalgae"] = "tropical storm"
+cause[cause == "cylone tasha, monsoon rain, cyclone"] = "tropical cyclone, monsoon rain"
+cause[cause == "dam failure, heavy rain"] = "dam break, heavy rain"
+cause[cause == "dam release, heavy  ra"] = "dam break, heavy rain" 
+cause[cause == "dam release, heavy  rain"] = "dam break, heavy rain"  
+cause[cause == "dam releases, monsoonal rain"] = "dam break, monsoon rain" 
+cause[cause == "heavy rain, snow"] = "heavy rain, snowmelt" 
+cause[cause == "heavy rain, dam release"] = "heavy rain, dam break"
+cause[cause == "heavy rain, tropical cycl"] = "heavy rain, tropical cyclone"
+cause[cause == "heavy rain, tropical storm joaquin"] = "heavy rain, tropical storm"
+cause[cause == "heavy rain,and dam release"] = "heavy rain, dam break"
+cause[cause == "ice jam, ice melt"] = "ice jam"
+cause[cause == "levee failure, early monsoonal rain"] = "levee failure, monsoon rain"
+cause[cause == "monsoonal rain, offshore tropica"] = "monsoon rain, tropical storm"
+cause[cause == "monsoonal rain, tropical storm k"] = "monsoon rain, tropical storm"
+cause[cause == "monsoonal rain, tropical storm rust"] = "monsoon rain, tropical storm"
+cause[cause == "rain, snow"] = "heavy rain, snowmelt"
+cause[cause == "rain, snow melt"] = "heavy rain, snowmelt" 
+cause[cause == "rain, snowmelt"] = "heavy rain, snowmelt"
+cause[cause == "storm surge, heavy rai"] = "storm surge, heavy rain"
+cause[cause == "torrential rain, hgh tides"] = "torrential rain, high tide"
+cause[cause == "torrential rain, mudslides"] = "torrential rain, landslide"
+cause[cause == "torrential rain, tropical storm gon"] = "torrential rain, tropical storm"
+
+cause_list <- strsplit(as.character(cause), ", ")
+
+# Create a list for all skill names
+cause_name <- vector(mode="character", length=0)
+
+cause.dummy = data.frame(matrix(vector(),nrow = nrow(gf)))
+# Create dummies for skills, loop through samples and skills
+for (i in 1:length(cause)) {
+  
+  for (j in cause_list[[i]]) {
+    
+    # append the names, create a new column if it is a new cause
+    if (!is.element(j, cause_name)) {
+      cause_name = append(cause_name, j)
+      cause.dummy[, j] = 0
+    }
+    
+    cause.dummy[i, j] = 1
+  }
+  
+}
+
+
+cause.count1 = as.data.frame(colSums(cause.dummy))
+cause.count1 = cbind(row.names(cause.count1), cause.count1)
+colnames(cause.count1) = c("main.cause", "count")
+cause.count1 = cause.count1[order(cause.count1$main.cause),]
+cause.count2 = as.data.frame(table(gf$Main.cause))
+cause.count = merge(cause.count2, cause.count1, by.x = "Var1", by.y = "main.cause")
+colnames(cause.count) = c("main.cause", "single.count", "all.count")
+
+cause.count = melt(cause.count, id.vars = "main.cause")
+cause.count = cause.count[order(cause.count$value, decreasing = T),]
+
+ggplot(cause.count[1:12,],aes(x=reorder(main.cause, value),value,fill=variable)) + 
+  geom_bar(stat="identity",position="dodge") + xlab("main cause") + coord_flip()
+
+ggplot(cause.count[13:nrow(cause.count),],aes(x=reorder(main.cause, value),value,fill=variable)) + 
+  geom_bar(stat="identity",position="dodge") + xlab("main cause") + coord_flip()
+
+##################################################################################
+## plot wordcloud for headlines
+library(tm)
+library(SnowballC)
+library(wordcloud)
+
+gf = read.csv('GF.csv', stringsAsFactors = FALSE)
+gfCorpus <- Corpus(VectorSource(gf[,30]))
+gfCorpus <- tm_map(gfCorpus, PlainTextDocument)
+gfCorpus <- tm_map(gfCorpus, content_transformer(tolower), lazy = T)
+gfCorpus <- tm_map(gfCorpus, removePunctuation, lazy = T)
+gfCorpus <- tm_map(gfCorpus, removeWords, stopwords('english'), lazy = T)
+gfCorpus <- tm_map(gfCorpus, stemDocument, lazy = T)
+pal2 <- brewer.pal(12,"Paired")
+wordcloud(gfCorpus, max.words = 100, random.order = FALSE, colors = pal2)
