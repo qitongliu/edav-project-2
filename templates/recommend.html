@@ -1,0 +1,23 @@
+<html>
+<head>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+    <link href="/static/css/materialize.css" rel="stylesheet">
+
+</head>
+<body>
+  <h1 align="center">Recommend Movies</h1>
+
+  <div>
+    {% for movie in recomres %}
+      <a href={{movie.imdburl}}><h2 align="center">{{movie.title}}</h2></a> <p></p>
+    {% endfor %}
+  </div>
+
+</body>
+
+</html>
